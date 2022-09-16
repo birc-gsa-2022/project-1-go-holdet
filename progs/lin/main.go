@@ -36,23 +36,23 @@ func main() {
 func lin(x string, p string) (matches []int) {
 	b := Borderarray(p)
 	i := 0
-outer_loop:
-	for i < len(x)-len(p)+1 {
-		for j, char := range []byte(p) {
-			if char != x[i+j] {
-				if j == 0 {
-					i += 1
-					continue outer_loop
-				}
-				i += b[j-1] + 1
-				continue outer_loop
-			}
+	j := 0
+
+	for len(x)-i >= (len(p) - j) {
+		if x[i] == p[j] {
+			i += 1
+			j += 1
 		}
-		matches = append(matches, i)
-		if b[len(b)-1] == 0 {
-			i += len(b)
-		} else {
-			i += b[len(b)-1]
+
+		if j == len(p) {
+			matches = append(matches, i-j)
+			j = b[j-1]
+		} else if i < len(x) && x[i] != p[j] {
+			if j != 0 {
+				j = b[j-1]
+			} else {
+				i += 1
+			}
 		}
 	}
 	return matches
