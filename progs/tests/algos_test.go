@@ -1,8 +1,11 @@
 package test
 
 import (
+	"encoding/csv"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -38,7 +41,7 @@ func TestVaryingAlphabets(t *testing.T) {
 		English, DNA, Repetitive, A}
 
 	for _, v := range Alphabets {
-		genome, reads := BuildSomeFastaAndFastq(2000000, 1000, 10, v, 3)
+		genome, reads := BuildSomeFastaAndFastq(200000, 1000, 10, v, 3)
 		time_Start := time.Now()
 		resNaive := runNaive(genome, reads)
 		time_Naive += int(time.Since(time_Start))
@@ -54,6 +57,48 @@ func TestVaryingAlphabets(t *testing.T) {
 	}
 	fmt.Println(time_Naive / 100000)
 	fmt.Println(time_Lin / 1000000)
+
+}
+
+func TestMakeDataFixN(t *testing.T) {
+	csvFile, err := os.Create("fixed_n_data.csv")
+	if err != nil {
+		log.Fatalf("failed creating file: %s", err)
+	}
+	csvwriter := csv.NewWriter(csvFile)
+	_ = csvwriter.Write([]string{"naive", "kmp"})
+
+	num_of_n := 1000
+	time_Naive := 0
+	time_Lin := 0
+
+	for i := 1; i < 15; i++ {
+
+		num_of_n *= 2
+		fmt.Println(num_of_n)
+		genome, reads := BuildSomeFastaAndFastq(num_of_n, 1000, 10, DNA, 3)
+		time_Start := time.Now()
+		resNaive := runLin(genome, reads)
+		time_Naive += int(time.Since(time_Start))
+		fmt.Println("NAIVE", int(time.Since(time_Start)))
+		time_Start = time.Now()
+		resLin := runNaive(genome, reads)
+		time_Lin += int(time.Since(time_Start))
+		fmt.Println("LINEA", int(time.Since(time_Start)))
+		fmt.Println("")
+
+		for pos, s1 := range resNaive {
+			if s1 != resLin[pos] {
+				t.Error("error at ", pos, "naive: "+s1+"   lin: "+resLin[pos])
+			}
+		}
+		_ = csvwriter.Write([]string{strconv.Itoa(time_Naive), strconv.Itoa(time_Lin)})
+
+	}
+	csvwriter.Flush()
+
+	fmt.Println(time_Naive / 100000)
+	fmt.Println(time_Lin / 100000)
 
 }
 
