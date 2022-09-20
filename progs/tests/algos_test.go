@@ -6,12 +6,13 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	gsa "birc.au.dk/gsa/helpers"
 )
 
 func TestOutput(t *testing.T) {
-	genome, reads := BuildSomeFastaAndFastq(1000, 100, Repetitive, 3)
+	genome, reads := BuildSomeFastaAndFastq(100, 20, 1500, Repetitive, 3)
 	resNaive := runNaive(genome, reads)
 	resLin := runLin(genome, reads)
 	fmt.Println(len(resNaive))
@@ -27,6 +28,33 @@ func TestOutput(t *testing.T) {
 			t.Error("error at ", pos, "naive: "+s1+"   lin: "+resLin[pos])
 		}
 	}
+}
+
+func TestVaryingAlphabets(t *testing.T) {
+	time_Naive := 0
+	time_Lin := 0
+
+	Alphabets := []Alphabet{
+		English, DNA, Repetitive, A}
+
+	for _, v := range Alphabets {
+		genome, reads := BuildSomeFastaAndFastq(2000000, 1000, 10, v, 3)
+		time_Start := time.Now()
+		resNaive := runNaive(genome, reads)
+		time_Naive += int(time.Since(time_Start))
+		time_Start = time.Now()
+		resLin := runLin(genome, reads)
+		time_Lin += int(time.Since(time_Start))
+		for pos, s1 := range resNaive {
+
+			if s1 != resLin[pos] {
+				t.Error("error at ", pos, "naive: "+s1+"   lin: "+resLin[pos])
+			}
+		}
+	}
+	fmt.Println(time_Naive / 100000)
+	fmt.Println(time_Lin / 1000000)
+
 }
 
 func runNaive(genomeString string, readsString string) []string {
@@ -145,28 +173,30 @@ func randString(number int, alphabet Alphabet) string {
 	return string(b)
 }
 
-func BuildSomeFastaAndFastq(longest int, chr_amount int, alphabet Alphabet, seed int64) (string, string) {
+func BuildSomeFastaAndFastq(len_Fasta int, len_Fastq int, amount int, alphabet Alphabet, seed int64) (string, string) {
 
 	rand.Seed(seed)
 
 	var sb strings.Builder
 	var sc strings.Builder
 
-	for i := 0; i < chr_amount; i++ {
+	for i := 0; i < amount; i++ {
 		sb.WriteString("> chr" + strconv.Itoa(i) + "\n")
 
-		b_str := randString(longest, alphabet)
+		b_str := randString(len_Fasta, alphabet)
 		sb.WriteString(b_str + "\n")
 
 		sc.WriteString("@read" + strconv.Itoa(i) + "\n")
 
-		idx := rand.Intn(len(b_str))
-		c_str := ""
-		if len(b_str) < idx+3 {
-			c_str = b_str[idx:]
-		} else {
-			c_str = b_str[idx : idx+3]
+		dif := len_Fasta - len_Fastq
+		idx := 0
+		//allows for fasta and fastq to be same len. rand.intn panics for n=0 input.
+		if dif > 0 {
+			idx = rand.Intn(len_Fasta - len_Fastq)
+
 		}
+		c_str := b_str[idx:(idx + len_Fastq)]
+
 		sc.WriteString(c_str + "\n")
 	}
 
