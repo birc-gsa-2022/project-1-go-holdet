@@ -41,22 +41,29 @@ func TestVaryingAlphabets(t *testing.T) {
 		English, DNA, Repetitive, A}
 
 	for _, v := range Alphabets {
-		genome, reads := BuildSomeFastaAndFastq(200000, 1000, 10, v, 3)
-		time_Start := time.Now()
-		resNaive := runNaive(genome, reads)
-		time_Naive += int(time.Since(time_Start))
-		time_Start = time.Now()
-		resLin := runLin(genome, reads)
-		time_Lin += int(time.Since(time_Start))
-		for pos, s1 := range resNaive {
+		genome, reads := BuildSomeFastaAndFastq(300, 200, 500, v, 3)
 
-			if s1 != resLin[pos] {
-				t.Error("error at ", pos, "naive: "+s1+"   lin: "+resLin[pos])
+		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, len(genome)+1)
+
+		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, len(reads)+1)
+
+		for _, read := range parsedReads {
+			for _, gen := range parsedGenomes {
+				time_Start := time.Now()
+
+				Naive(gen.Rec, read.Rec)
+				time_Naive += int(time.Since(time_Start))
+
+				time_Start = time.Now()
+				lin(gen.Rec, read.Rec)
+				time_Lin += int(time.Since(time_Start))
+
 			}
 		}
+
 	}
-	fmt.Println(time_Naive / 100000)
-	fmt.Println(time_Lin / 1000000)
+	fmt.Println(time_Naive / 1000)
+	fmt.Println(time_Lin / 1000)
 
 }
 
@@ -66,7 +73,7 @@ func TestMakeDataFixN(t *testing.T) {
 		log.Fatalf("failed creating file: %s", err)
 	}
 	csvwriter := csv.NewWriter(csvFile)
-	_ = csvwriter.Write([]string{"naive", "kmp"})
+	_ = csvwriter.Write([]string{"x_size", "p_size", "naive", "kmp"})
 
 	num_of_n := 1000
 	time_Naive := 0
@@ -75,38 +82,71 @@ func TestMakeDataFixN(t *testing.T) {
 	for i := 1; i < 15; i++ {
 
 		num_of_n *= 2
-		fmt.Println(num_of_n)
-		genome, reads := BuildSomeFastaAndFastq(num_of_n, 1000, 10, DNA, 3)
-		time_Start := time.Now()
-		resNaive := runLin(genome, reads)
-		time_Naive += int(time.Since(time_Start))
-		fmt.Println("NAIVE", int(time.Since(time_Start)))
-		time_Start = time.Now()
-		resLin := runNaive(genome, reads)
-		time_Lin += int(time.Since(time_Start))
-		fmt.Println("LINEA", int(time.Since(time_Start)))
-		fmt.Println("")
+		num_of_m := 7
 
-		for pos, s1 := range resNaive {
-			if s1 != resLin[pos] {
-				t.Error("error at ", pos, "naive: "+s1+"   lin: "+resLin[pos])
+		genome, reads := BuildSomeFastaAndFastq(num_of_n, num_of_m, 50, Repetitive, 77)
+		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, num_of_n+1)
+		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, num_of_n+1)
+
+		for _, read := range parsedReads {
+			for _, gen := range parsedGenomes {
+				time_StartN := time.Now()
+
+				resultN := Naive(gen.Rec, read.Rec)
+				time_endN := int(time.Since(time_StartN))
+				time_Naive += time_endN
+
+				time_StartL := time.Now()
+				resultL := lin(gen.Rec, read.Rec)
+				time_endL := int(time.Since(time_StartL))
+				time_Lin += time_endL
+
+				//fmt.Println(resultN)
+				for i, v := range resultN {
+
+					if v != resultL[i] {
+						t.Error("not same result")
+					}
+				}
+
 			}
 		}
-		_ = csvwriter.Write([]string{strconv.Itoa(time_Naive), strconv.Itoa(time_Lin)})
+		fmt.Println("NAIVE", int((time_Naive)))
+		fmt.Println("LINEA", int(time_Lin))
+		_ = csvwriter.Write([]string{strconv.Itoa(num_of_n), strconv.Itoa(num_of_m), strconv.Itoa(time_Naive), strconv.Itoa(time_Lin)})
+		time_Naive, time_Lin = 0, 0
+		csvwriter.Flush()
 
 	}
-	csvwriter.Flush()
 
-	fmt.Println(time_Naive / 100000)
-	fmt.Println(time_Lin / 100000)
+}
 
+func TestDoesMakeDataWork(t *testing.T) {
+	size := 100
+	fasta, fastq := BuildSomeFastaAndFastq(size, size, 1, DNA, 0)
+	x := gsa.GeneralParserStub(fasta, gsa.Fasta, size+1)
+	p := gsa.GeneralParserStub(fastq, gsa.Fastq, size+1)
+	if x[0].Rec != p[0].Rec {
+		t.Error("not identical genomes")
+	}
+
+	expected_len := 266000
+
+	fastaa, _ := BuildSomeFastaAndFastq(expected_len, 100, 1, DNA, 0)
+	xx := gsa.GeneralParserStub(fastaa, gsa.Fasta, expected_len+1)
+	//pp := gsa.GeneralParserStub(fastqq, gsa.Fastq)
+	genomexx := xx[0].Rec
+	if len(genomexx) != expected_len {
+		fmt.Println(len(genomexx), expected_len)
+		t.Error("sus")
+	}
 }
 
 func runNaive(genomeString string, readsString string) []string {
 
-	parsedGenomes := gsa.GeneralParserStub(genomeString, gsa.Fasta)
+	parsedGenomes := gsa.GeneralParserStub(genomeString, gsa.Fasta, len(genomeString))
 
-	parsedReads := gsa.GeneralParserStub(readsString, gsa.Fastq)
+	parsedReads := gsa.GeneralParserStub(readsString, gsa.Fastq, len(genomeString))
 
 	sams := make([]string, 0)
 	for _, read := range parsedReads {
@@ -136,9 +176,9 @@ outer_loop:
 
 func runLin(genomeString string, readsString string) []string {
 
-	parsedGenomes := gsa.GeneralParserStub(genomeString, gsa.Fasta)
+	parsedGenomes := gsa.GeneralParserStub(genomeString, gsa.Fasta, len(genomeString))
 
-	parsedReads := gsa.GeneralParserStub(readsString, gsa.Fastq)
+	parsedReads := gsa.GeneralParserStub(readsString, gsa.Fastq, len(genomeString))
 	sams := make([]string, 0)
 
 	for _, read := range parsedReads {
