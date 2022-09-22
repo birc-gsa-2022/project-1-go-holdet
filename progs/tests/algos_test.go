@@ -15,7 +15,7 @@ import (
 )
 
 func TestOutput(t *testing.T) {
-	genome, reads := BuildSomeFastaAndFastq(100, 20, 1500, Repetitive, 3)
+	genome, reads := BuildSomeFastaAndFastq(100, 20, 1500, AB, 3)
 	resNaive := runNaive(genome, reads)
 	resLin := runLin(genome, reads)
 	fmt.Println(len(resNaive))
@@ -38,7 +38,7 @@ func TestVaryingAlphabets(t *testing.T) {
 	time_Lin := 0
 
 	Alphabets := []Alphabet{
-		English, DNA, Repetitive, A}
+		English, DNA, AB, A}
 
 	for _, v := range Alphabets {
 		genome, reads := BuildSomeFastaAndFastq(300, 200, 500, v, 3)
@@ -75,46 +75,48 @@ func TestMakeDataFixN(t *testing.T) {
 	csvwriter := csv.NewWriter(csvFile)
 	_ = csvwriter.Write([]string{"x_size", "p_size", "naive", "kmp"})
 
-	num_of_n := 1000
+	num_of_n := 0
 	time_Naive := 0
 	time_Lin := 0
 
 	for i := 1; i < 15; i++ {
 
 		num_of_n *= 2
-		num_of_m := num_of_n / 100
+		num_of_m := 200
+		genome, reads := BuildARepetitiveFastaAndFastq(20, num_of_n, 78)
+		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, num_of_n*num_of_m+1)
+		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, num_of_n*num_of_m+1)
 
-		genome, reads := BuildSomeFastaAndFastq(num_of_n, num_of_m, 1, Repetitive, 77)
-		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, num_of_n+1)
-		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, num_of_n+1)
+		for i := 0; i < 10; i++ {
+			for _, read := range parsedReads {
+				for _, gen := range parsedGenomes {
+					time_StartN := time.Now()
 
-		for _, read := range parsedReads {
-			for _, gen := range parsedGenomes {
-				time_StartN := time.Now()
+					//resultN := Naive(gen.Rec, read.Rec)
+					time_endN := int(time.Since(time_StartN))
+					time_Naive += time_endN
 
-				resultN := Naive(gen.Rec, read.Rec)
-				time_endN := int(time.Since(time_StartN))
-				time_Naive += time_endN
+					time_StartL := time.Now()
+					lin(gen.Rec, read.Rec)
+					time_endL := int(time.Since(time_StartL))
+					time_Lin += time_endL
 
-				time_StartL := time.Now()
-				resultL := lin(gen.Rec, read.Rec)
-				time_endL := int(time.Since(time_StartL))
-				time_Lin += time_endL
+					//fmt.Println(resultN)
+					//for i, v := range resultN {
 
-				//fmt.Println(resultN)
-				for i, v := range resultN {
+					//	if v != resultL[i] {
+					//		t.Error("not same result")
+					//	}
+					//}
 
-					if v != resultL[i] {
-						t.Error("not same result")
-					}
 				}
-
 			}
+			fmt.Println("NAIVE", int((time_Naive)))
+			fmt.Println("LINEA", int(time_Lin))
+			_ = csvwriter.Write([]string{strconv.Itoa(num_of_n), strconv.Itoa(num_of_m), strconv.Itoa(time_Naive), strconv.Itoa(time_Lin)})
+			time_Naive, time_Lin = 0, 0
 		}
-		fmt.Println("NAIVE", int((time_Naive)))
-		fmt.Println("LINEA", int(time_Lin))
-		_ = csvwriter.Write([]string{strconv.Itoa(num_of_n), strconv.Itoa(num_of_m), strconv.Itoa(time_Naive), strconv.Itoa(time_Lin)})
-		time_Naive, time_Lin = 0, 0
+
 		csvwriter.Flush()
 
 	}
@@ -243,10 +245,10 @@ func Borderarray(x string) []int {
 type Alphabet string
 
 const (
-	English    Alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	DNA        Alphabet = "ACTG"
-	Repetitive Alphabet = "ab"
-	A          Alphabet = "a"
+	English Alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	DNA     Alphabet = "ACTG"
+	AB      Alphabet = "ab"
+	A       Alphabet = "a"
 )
 
 func randString(number int, alphabet Alphabet) string {
@@ -286,4 +288,41 @@ func BuildSomeFastaAndFastq(len_Fasta int, len_Fastq int, amount int, alphabet A
 	}
 
 	return sb.String(), sc.String()
+}
+
+func BuildARepetitiveFastaAndFastq(repetitions int, len_Fastq int, seed int64) (string, string) {
+	rand.Seed(seed)
+
+	var sb strings.Builder
+	var sc strings.Builder
+
+	single_rep := strings.Repeat("a", len_Fastq-1)
+
+	sb.WriteString("> chr" + strconv.Itoa(0) + "\n")
+	sb.WriteString(strings.Repeat(single_rep+"b", repetitions))
+
+	sb.WriteString("@ read" + strconv.Itoa(0) + "\n")
+	sc.WriteString(single_rep + "c")
+
+	return sb.String(), sc.String()
+
+}
+
+func BuildARepetitiveFastaAndFastqNotQuadratic(len_Fasta int, len_Fastq int, seed int64) (string, string) {
+	//crashes if len fastq cant be divided by len fasta
+	rand.Seed(seed)
+
+	var sb strings.Builder
+	var sc strings.Builder
+
+	single_rep := strings.Repeat("a", len_Fastq-1)
+
+	sb.WriteString("> chr" + strconv.Itoa(0) + "\n")
+	sb.WriteString(strings.Repeat(single_rep+"b", len_Fasta/len_Fastq))
+
+	sb.WriteString("@ read" + strconv.Itoa(0) + "\n")
+	sc.WriteString(single_rep + "a")
+
+	return sb.String(), sc.String()
+
 }
