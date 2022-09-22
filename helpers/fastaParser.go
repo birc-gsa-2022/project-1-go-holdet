@@ -63,9 +63,11 @@ func GeneralParser(file string, format Format) []Recs {
 	return recs
 }
 
-func GeneralParserStub(file string, format Format) []Recs {
+func GeneralParserStub(file string, format Format, maxCapacity int) []Recs {
 	output := ""
 	fileScanner := bufio.NewScanner(strings.NewReader(file))
+	buf := make([]byte, maxCapacity)
+	fileScanner.Buffer(buf, maxCapacity)
 	activeRec := new(Recs)
 
 	recs := make([]Recs, 0)

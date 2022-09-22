@@ -82,9 +82,9 @@ func TestMakeDataFixN(t *testing.T) {
 	for i := 1; i < 15; i++ {
 
 		num_of_n *= 2
-		num_of_m := 7
+		num_of_m := num_of_n / 100
 
-		genome, reads := BuildSomeFastaAndFastq(num_of_n, num_of_m, 50, Repetitive, 77)
+		genome, reads := BuildSomeFastaAndFastq(num_of_n, num_of_m, 1, Repetitive, 77)
 		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, num_of_n+1)
 		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, num_of_n+1)
 
