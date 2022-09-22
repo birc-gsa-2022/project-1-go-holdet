@@ -1,6 +1,8 @@
 >chrom0
-cgaagccgag
+cgaagcccatgat
 
-tctaccccca
+gtctaccccca
 >chrom1
-tgattaaagcgcagcaaagg
+tgattaaagcgcagcgcgacagg
+>chrom2
+a

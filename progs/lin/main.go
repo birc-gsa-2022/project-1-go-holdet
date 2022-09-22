@@ -38,13 +38,18 @@ func lin(x string, p string) (matches []int) {
 	i := 0
 	j := 0
 
+	if p == "" {
+		return matches
+	}
+
 	for len(x)-i >= (len(p) - j) {
+
 		if x[i] == p[j] {
 			i += 1
 			j += 1
 		}
-
 		if j == len(p) {
+
 			matches = append(matches, i-j)
 			j = b[j-1]
 		} else if i < len(x) && x[i] != p[j] {

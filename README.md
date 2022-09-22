@@ -94,7 +94,7 @@ Once you have implemented the tools, fill out the report below.
 
 ### Insights you may have had while implementing and comparing the algorithms. 
 
-During the testing we realized that the alphabets used when generating reads and genomes had a big impact on the performance of the naive algorithm. This boils to the fact that the algorithm quickly decides that the current placement of the read is not a match in the genome it is searching. This lead to the runningtime of the naive algorithm increasing linearly and therefore outperforming KMP since it builds a borderarray. After choosing an alphabet with less possible characters we made the naive algorithm actually increase quadratically as is also shown later in the report.
+During the testing we realized that the alphabets used when generating reads and genomes had a big impact on the performance of the naive algorithm. This boils to the fact that the algorithm quickly decides that the current placement of the read is not a match in the genome it is searching. This means that the naive algorithm behaves as a linear algorithm on these kinds of input. Thee naive algorithm therefore tends to outperform KMP since KMP needs to pay the overhead of creating the borderarray. After choosing an alphabet with less possible characters we made the naive algorithm actually increase quadratically as is also shown later in the report.
 
 We also came to the conclusion that making weekly exercises was a good idea since a large part of the project was already done.
 
@@ -107,7 +107,7 @@ In the beginning we also faced some problems with the folder structure in regard
 
 ### Experiments that verifies the correctness of your implementations.
 
-We verified the implementation of KMP by comparing the result to the result of the naive algorithm. We ran both algorithms on randomly generated data over 4 different alphabets:  DNA, English alphabet, A, AB and AAAB.   In all cases the results where the same and also weren't empty. So we concluded that since both algorithms yielded some matches and the reads and genomes were sufficiently long and random, our implementation of KMP works.
+We verified the implementation of KMP by comparing the result to the result of the naive algorithm. We ran both algorithms on randomly generated data over different alphabets:  DNA, English alphabet, A, AB and (AA...AAB) etc. In all cases the two algorithms generated reported the same matches. So we concluded that since both algorithms yielded some matches and the reads and genomes were sufficiently long and random, our implementation of KMP works.
 
 
 ### Experiments validating the running time.

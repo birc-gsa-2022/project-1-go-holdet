@@ -33,6 +33,9 @@ func main() {
 }
 
 func Naive(x string, p string) (matches []int) {
+	if p == "" {
+		return matches
+	}
 outer_loop:
 	for i := 0; i < len(x)-len(p)+1; i++ {
 		for j, char := range []byte(p) {

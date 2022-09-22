@@ -75,15 +75,15 @@ func TestMakeDataFixN(t *testing.T) {
 	csvwriter := csv.NewWriter(csvFile)
 	_ = csvwriter.Write([]string{"x_size", "p_size", "naive", "kmp"})
 
-	num_of_n := 0
+	num_of_n := 200
 	time_Naive := 0
 	time_Lin := 0
 
 	for i := 1; i < 15; i++ {
 
 		num_of_n *= 2
-		num_of_m := 200
-		genome, reads := BuildARepetitiveFastaAndFastq(20, num_of_n, 78)
+		num_of_m := 100
+		genome, reads := BuildSomeFastaAndFastq(num_of_n, num_of_m, 20, English, 78)
 		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, num_of_n*num_of_m+1)
 		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, num_of_n*num_of_m+1)
 
@@ -92,22 +92,22 @@ func TestMakeDataFixN(t *testing.T) {
 				for _, gen := range parsedGenomes {
 					time_StartN := time.Now()
 
-					//resultN := Naive(gen.Rec, read.Rec)
+					resultN := Naive(gen.Rec, read.Rec)
 					time_endN := int(time.Since(time_StartN))
 					time_Naive += time_endN
 
 					time_StartL := time.Now()
-					lin(gen.Rec, read.Rec)
+					resultL := lin(gen.Rec, read.Rec)
 					time_endL := int(time.Since(time_StartL))
 					time_Lin += time_endL
 
 					//fmt.Println(resultN)
-					//for i, v := range resultN {
+					for i, v := range resultN {
 
-					//	if v != resultL[i] {
-					//		t.Error("not same result")
-					//	}
-					//}
+						if v != resultL[i] {
+							t.Error("not same result")
+						}
+					}
 
 				}
 			}
@@ -119,6 +119,68 @@ func TestMakeDataFixN(t *testing.T) {
 
 		csvwriter.Flush()
 
+	}
+
+}
+
+func TestPlotSameAlgorithmTwice(t *testing.T) {
+	csvFile, err := os.Create("same_alg_twice.csv")
+	if err != nil {
+		log.Fatalf("failed creating file: %s", err)
+	}
+	csvwriter := csv.NewWriter(csvFile)
+	_ = csvwriter.Write([]string{"x_size", "p_size", "kmp1", "kmp2"})
+
+	num_of_n := 4000
+	time_Lin1 := 0
+	time_Lin2 := 0
+
+	for i := 1; i < 15; i++ {
+
+		num_of_n *= 2
+		num_of_m := 4000
+		genome, reads := BuildARepetitiveFastaAndFastqNotQuadratic(num_of_n, 100, 78)
+
+		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, num_of_n+1)
+		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, num_of_n+1)
+		for i := 0; i < 10; i++ {
+			for _, read := range parsedReads {
+				for _, gen := range parsedGenomes {
+
+					time_StartL := time.Now()
+					r := Naive(gen.Rec, read.Rec)
+					time_endL := int(time.Since(time_StartL))
+					time_Lin1 += time_endL
+					if len(r) == -5 {
+						fmt.Println("g")
+					}
+
+				}
+
+			}
+
+			genome2, reads2 := BuildARepetitiveFastaAndFastqNotQuadratic(num_of_n, 200, 78)
+			parsedGenomes2 := gsa.GeneralParserStub(genome2, gsa.Fasta, num_of_n+1)
+			parsedReads2 := gsa.GeneralParserStub(reads2, gsa.Fastq, num_of_n+1)
+			for _, read := range parsedReads2 {
+
+				for _, gen := range parsedGenomes2 {
+					time_StartL := time.Now()
+					r := Naive(gen.Rec, read.Rec)
+					time_endL := int(time.Since(time_StartL))
+					time_Lin2 += time_endL
+					if len(r) == -5 {
+						fmt.Println("g")
+					}
+				}
+			}
+
+			fmt.Println("NAIVE", int((time_Lin1)))
+			fmt.Println("LINEA", int(time_Lin2))
+			_ = csvwriter.Write([]string{strconv.Itoa(num_of_n), strconv.Itoa(num_of_m), strconv.Itoa(time_Lin1), strconv.Itoa(time_Lin2)})
+			time_Lin1, time_Lin2 = 0, 0
+		}
+		csvwriter.Flush()
 	}
 
 }
@@ -163,6 +225,9 @@ func runNaive(genomeString string, readsString string) []string {
 }
 
 func Naive(x string, p string) (matches []int) {
+	if p == "" {
+		return matches
+	}
 outer_loop:
 	for i := 0; i < len(x)-len(p)+1; i++ {
 		for j, char := range []byte(p) {
@@ -199,6 +264,9 @@ func lin(x string, p string) (matches []int) {
 	b := Borderarray(p)
 	i := 0
 	j := 0
+	if p == "" {
+		return matches
+	}
 
 	for len(x)-i >= (len(p) - j) {
 		if x[i] == p[j] {
@@ -301,7 +369,7 @@ func BuildARepetitiveFastaAndFastq(repetitions int, len_Fastq int, seed int64) (
 	sb.WriteString("> chr" + strconv.Itoa(0) + "\n")
 	sb.WriteString(strings.Repeat(single_rep+"b", repetitions))
 
-	sb.WriteString("@ read" + strconv.Itoa(0) + "\n")
+	sc.WriteString("@ read" + strconv.Itoa(0) + "\n")
 	sc.WriteString(single_rep + "c")
 
 	return sb.String(), sc.String()
@@ -311,17 +379,17 @@ func BuildARepetitiveFastaAndFastq(repetitions int, len_Fastq int, seed int64) (
 func BuildARepetitiveFastaAndFastqNotQuadratic(len_Fasta int, len_Fastq int, seed int64) (string, string) {
 	//crashes if len fastq cant be divided by len fasta
 	rand.Seed(seed)
-
+	fmt.Println("NEW")
 	var sb strings.Builder
 	var sc strings.Builder
 
 	single_rep := strings.Repeat("a", len_Fastq-1)
 
 	sb.WriteString("> chr" + strconv.Itoa(0) + "\n")
-	sb.WriteString(strings.Repeat(single_rep+"b", len_Fasta/len_Fastq))
-
-	sb.WriteString("@ read" + strconv.Itoa(0) + "\n")
-	sc.WriteString(single_rep + "a")
+	reps := len_Fasta / len_Fastq
+	sb.WriteString(strings.Repeat((single_rep + "b"), reps))
+	sc.WriteString("@ read" + strconv.Itoa(0) + "\n")
+	sc.WriteString(single_rep + "c")
 
 	return sb.String(), sc.String()
 
