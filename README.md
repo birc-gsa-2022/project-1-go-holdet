@@ -116,15 +116,20 @@ For this section, you should address the following:
 
 * An experiment that verifies that your implementation of `naive` uses no more time than O(nm) to find all occurrences of a given pattern in a text. Remember to explain your choice of test data. What are “best” and “worst” case inputs? 
 
+To show the `naive` algorithm runs in O(nm) we conducted tests with a variable x value and different fixed p values.
+These results can be seen in:
+
+![](figs/naive_p_constant.jpg)
+
+In this experiment we run the naive algorithm on a repetitive alphabet which is prone to containing a lot of matches before a mismatch occurs. This results in an expected worst case O(nm) performance.
+It can clearly be seen that an increase in p value from 100 to 200 results in linear growth in the running time. This roughly doubles the running time of the algorithm, because of the increase in m value.
+As mentioned earlier the best case for the `naive` is on random alphabets 
+
 * An experiment that verifies that your implementations of `lin` use no more time than O(n+m) to find all occurrences of a given pattern in a text. Remember to explain your choice of test data. What are “best” and “worst” case inputs?
 
-You can insert pictures here like this:
+In comparison the running time of the `lin` algorithm can be seen conducted in the same manner as above in:
 
-```
-![](path/to/fig)
-```
+![](figs/kmp_p_constant.jpg)
 
-I am not ready to share my own results yet, so I will just show you a fast scooter.
-
-![](figs/scooter.jpg)
+In the figure above it can be seen that p behaves similair to a constant as it disappears when m increases. This confirms the running time of O(n+m).
 
