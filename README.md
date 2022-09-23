@@ -107,7 +107,7 @@ In the beginning we also faced some problems with the folder structure in regard
 
 ### Experiments that verifies the correctness of your implementations.
 
-We verified the implementation of KMP by comparing the result to the result of the naive algorithm. We ran both algorithms on randomly generated data over different alphabets:  DNA, English alphabet, A, AB and (AA...AAB) etc. In all cases the two algorithms generated reported the same matches. So we concluded that since both algorithms yielded some matches and the reads and genomes were sufficiently long and random, our implementation of KMP works.
+We verified the implementation of KMP by comparing the result to the result of the naive algorithm. We ran both algorithms on randomly generated data over different alphabets:  DNA, English alphabet, A, AB and (AA...AAB) and alphabets where occourences of some letters were way more common than others, etc. We also tried some edgecases such as empty x or p strings. In all cases the two algorithms generated reported the same matches. So we concluded that since both algorithms yielded some matches and the reads and genomes were sufficiently long and random, our implementation of KMP works.
 
 
 ### Experiments validating the running time.
@@ -122,14 +122,28 @@ These results can be seen in:
 ![](figs/naive_p_constant.jpg)
 
 In this experiment we run the naive algorithm on a repetitive alphabet which is prone to containing a lot of matches before a mismatch occurs. This results in an expected worst case O(nm) performance.
-It can clearly be seen that an increase in p value from 100 to 200 results in linear growth in the running time. This roughly doubles the running time of the algorithm, because of the increase in m value.
-As mentioned earlier the best case for the `naive` is on random alphabets 
+It can clearly be seen that an increase in p value from 100 to 200 results in linear growth in the running time. This can be seen since the running time roughly doubles between the two runs of the algorithm.
+
+We also tried to increment size of genome x and read p at the same time by some constant, in order to see if the algorithms running time would increase by n^2. This turned out to also be the case (notice that x axis is squared):
+![](figs/naive_quadratic.jpg)
+
+
+As mentioned earlier the best case for the `naive` is on random alphabets, where we only need to compare few symbols before mismatches occour. On such strings, we expect something similar to a linear running time. An example where we ran the naive alogrithm on a randomized string of 25 letters can be seen here:
+![](figs/naive_behaves_linearly.jpg)
+
+
+
 
 * An experiment that verifies that your implementations of `lin` use no more time than O(n+m) to find all occurrences of a given pattern in a text. Remember to explain your choice of test data. What are “best” and “worst” case inputs?
 
-In comparison the running time of the `lin` algorithm can be seen conducted in the same manner as above in:
+In comparison the running time of the `lin` algorithm can be seen conducted in the same manner as we did for the naive algorithm with a repetitive alphabet. The results are seen on this image:
 
 ![](figs/kmp_p_constant.jpg)
 
-In the figure above it can be seen that p behaves similair to a constant as it disappears when m increases. This confirms the running time of O(n+m).
+In the figure above it can be seen that p behaves similair to a constant as it disappears when m increases. This confirms the theoretical running time of O(n+m).
+
+We also tried as we did for naive to increment size of genome x and read p at the same time by some constant and plot the outcome, expecting some linear growth due to the theoretical running time being O(m+n):
+(notice the x axis here not squared as it was for naive)
+![](figs/kmp_linear.jpg)
+
 

@@ -139,7 +139,7 @@ func TestPlotSameAlgorithmTwice(t *testing.T) {
 
 		num_of_n *= 2
 		num_of_m := 4000
-		genome, reads := BuildARepetitiveFastaAndFastqNotQuadratic(num_of_n, 100, 78)
+		genome, reads := BuildSomeFastaAndFastq(num_of_n, 100, 1, English, 78)
 
 		parsedGenomes := gsa.GeneralParserStub(genome, gsa.Fasta, num_of_n+1)
 		parsedReads := gsa.GeneralParserStub(reads, gsa.Fastq, num_of_n+1)
@@ -159,7 +159,7 @@ func TestPlotSameAlgorithmTwice(t *testing.T) {
 
 			}
 
-			genome2, reads2 := BuildARepetitiveFastaAndFastqNotQuadratic(num_of_n, 200, 78)
+			genome2, reads2 := BuildSomeFastaAndFastq(num_of_n, 200, 1, English, 78)
 			parsedGenomes2 := gsa.GeneralParserStub(genome2, gsa.Fasta, num_of_n+1)
 			parsedReads2 := gsa.GeneralParserStub(reads2, gsa.Fastq, num_of_n+1)
 			for _, read := range parsedReads2 {
